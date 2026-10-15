@@ -1,0 +1,49 @@
+id = "S06"
+name = "WMI event-subscription persistence"
+technique = "T1546.003"
+tactic = "persistence"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+reboot_at = 60
+notes = """
+The t=60 image is acquired AFTER a full reboot. The subscription lives in the
+WMI repository (disk-backed) so consumer artefacts can reappear in memory when
+WMI re-loads it, while the creation command line cannot. Requires the YARA
+rules in rules/yara/ to be passed to `memhalflife analyse --yara`.
+"""
+
+[[artefact]]
+id = "wmi_consumer_strings"
+category = "persistence"
+weight = 3
+plugin = "windows.vadyarascan.VadYaraScan"
+description = "YARA hit for WMI event consumer/filter strings in WMI host processes."
+[artefact.match]
+Rule = 'MemHL_WMI_EventConsumer'
+[artefact.synthetic]
+p = [0.5, 0.5, 0.5, 0.5]
+row = { PID = 1888, ImageFileName = "WmiPrvSE.exe", Rule = "MemHL_WMI_EventConsumer", Component = "$consumer" }
+
+[[artefact]]
+id = "scrcons_process"
+category = "persistence"
+weight = 2
+plugin = "windows.pslist.PsList"
+description = "scrcons.exe (WMI script consumer host) present."
+[artefact.match]
+ImageFileName = '(?i)^scrcons\.exe$'
+[artefact.synthetic]
+p = [0.3, 0.3, 0.3, 0.3]
+row = { PID = 1999, PPID = 600, ImageFileName = "scrcons.exe", ExitTime = "" }
+
+[[artefact]]
+id = "subscription_creation_cmdline"
+category = "execution"
+weight = 2
+plugin = "windows.cmdline.CmdLine"
+[artefact.match]
+Args = '(?i)(__EventFilter|CommandLineEventConsumer|ActiveScriptEventConsumer|FilterToConsumerBinding)'
+[artefact.synthetic]
+p = [0.9, 0.6, 0.3, 0.0]
+row = { PID = 4700, Process = "powershell.exe", Args = 'powershell.exe -c Set-WmiInstance -Class __EventFilter ...' }

@@ -1,0 +1,67 @@
+id = "S04"
+name = "Process injection into a trusted host process"
+technique = "T1055"
+tactic = "defense-evasion"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+notes = """
+Injected code lives as long as the host process. Note (from prior published
+work on this topic) that socket ownership may remain attributed to the
+original process after migration, and reflective loaders may lack an MZ header,
+so rules deliberately avoid depending on either.
+"""
+
+[[artefact]]
+id = "rwx_region_in_host"
+category = "injection"
+weight = 3
+plugin = "windows.malware.malfind.Malfind"
+description = "RWX private region in a commonly abused host process."
+[artefact.match]
+Process = '(?i)^(svchost|explorer|notepad|winlogon|spoolsv)\.exe$'
+Protection = 'PAGE_EXECUTE_READWRITE'
+[artefact.partial]
+Protection = 'PAGE_EXECUTE_READWRITE'
+[artefact.synthetic]
+p = [1.0, 0.95, 0.9, 0.85]
+row = { PID = 820, Process = "svchost.exe", Protection = "PAGE_EXECUTE_READWRITE", Notes = "" }
+partial_row = { PID = 999, Process = "chrome.exe", Protection = "PAGE_EXECUTE_READWRITE", Notes = "" }
+
+[[artefact]]
+id = "hollow_or_mismatch"
+category = "injection"
+weight = 2
+plugin = "windows.malware.hollowprocesses.HollowProcesses"
+description = "HollowProcesses reports an image/VAD discrepancy for the host."
+[artefact.match]
+Process = '(?i)^(svchost|explorer|notepad)\.exe$'
+Notes = '.+'
+[artefact.synthetic]
+p = [0.8, 0.75, 0.7, 0.65]
+row = { PID = 820, Process = "svchost.exe", Notes = "Suspicious VAD content" }
+
+[[artefact]]
+id = "suspicious_thread"
+category = "injection"
+weight = 2
+plugin = "windows.malware.suspicious_threads.SuspiciousThreads"
+[artefact.match]
+Process = '(?i)^(svchost|explorer|notepad)\.exe$'
+Note = '.+'
+[artefact.synthetic]
+p = [0.9, 0.85, 0.8, 0.75]
+row = { PID = 820, Process = "svchost.exe", TID = 2200, Note = "Thread start address in private memory" }
+
+[[artefact]]
+id = "host_outbound_socket"
+category = "network"
+weight = 2
+plugin = "windows.netscan.NetScan"
+description = "Outbound connection attributed to the host process (or its original loader)."
+[artefact.match]
+Owner = '(?i)^(svchost|explorer|notepad|powershell)'
+State = 'ESTABLISHED'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.85, 0.75]
+row = { PID = 820, Owner = "svchost.exe", Proto = "TCPv4", ForeignAddr = "198.51.100.7", ForeignPort = 443, State = "ESTABLISHED" }

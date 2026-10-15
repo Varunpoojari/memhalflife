@@ -1,0 +1,53 @@
+id = "L01"
+name = "Fileless ELF execution from anonymous memory (memfd)"
+technique = "T1620"
+tactic = "defense-evasion"
+platform = "linux"
+environment = "cloud-vm"
+timepoints = [0, 5, 15, 60]
+notes = """
+Cloud Linux VM (EC2 / Azure VM / GCE). A benign test binary is executed from
+a memfd rather than from disk, so disk and file-integrity tooling sees nothing.
+Acquire with AVML or LiME; analyse with a matching Volatility 3 Linux ISF.
+Use a harmless test program, e.g. one that sleeps and exits.
+"""
+
+[[artefact]]
+id = "memfd_mapping"
+category = "execution"
+weight = 3
+plugin = "linux.proc.Maps"
+description = "Executable mapping backed by a memfd object."
+[artefact.match]
+"File Path" = 'memfd:'
+Flags = 'x'
+[artefact.partial]
+"File Path" = 'memfd:'
+[artefact.synthetic]
+p = [1.0, 0.95, 0.9, 0.8]
+row = { PID = 3301, Process = "payload", Flags = "r-xp", "File Path" = "/memfd:payload (deleted)" }
+partial_row = { PID = 3301, Process = "payload", Flags = "rw-p", "File Path" = "/memfd:payload (deleted)" }
+
+[[artefact]]
+id = "memfd_open_file"
+category = "execution"
+weight = 2
+plugin = "linux.lsof.Lsof"
+description = "Open file descriptor referencing a memfd."
+[artefact.match]
+Path = 'memfd:'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.85, 0.75]
+row = { PID = 3301, Process = "payload", FD = 3, Path = "/memfd:payload (deleted)" }
+
+[[artefact]]
+id = "proc_fd_exec"
+category = "execution"
+weight = 2
+plugin = "linux.psaux.PsAux"
+description = "Process whose argv points at /proc/self/fd or a memfd name."
+[artefact.match]
+ARGS = '(^/proc/(self|\d+)/fd/\d+|memfd:)'
+[artefact.synthetic]
+p = [1.0, 0.9, 0.85, 0.75]
+row = { PID = 3301, PPID = 3290, COMM = "payload", ARGS = "/proc/self/fd/3" }

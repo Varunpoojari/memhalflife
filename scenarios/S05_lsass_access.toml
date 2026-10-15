@@ -1,0 +1,50 @@
+id = "S05"
+name = "LSASS credential access"
+technique = "T1003.001"
+tactic = "credential-access"
+platform = "windows"
+environment = "onprem"
+timepoints = [0, 5, 15, 60]
+notes = """
+Evidence is tied to the accessing process. If that process exits, the
+EPROCESS, handles and tool command line may all be freed together
+(cliff-edge decay). Use an Atomic Red Team T1003.001 test in an isolated lab.
+"""
+
+[[artefact]]
+id = "lsass_handle_by_nonsystem"
+category = "credential"
+weight = 3
+plugin = "windows.handles.Handles"
+description = "Process handle to lsass.exe held by an unexpected process."
+[artefact.match]
+Type = '^Process$'
+Name = '(?i)lsass\.exe'
+Process = '(?i)^(?!lsass|wininit|csrss|services|svchost|MsMpEng|System).+'
+[artefact.synthetic]
+p = [1.0, 0.1, 0.0, 0.0]
+row = { PID = 7000, Process = "tool.exe", Type = "Process", Name = "lsass.exe Pid 664", GrantedAccess = "0x1410" }
+
+[[artefact]]
+id = "debug_privilege_enabled"
+category = "credential"
+weight = 2
+plugin = "windows.privileges.Privs"
+[artefact.match]
+Privilege = 'SeDebugPrivilege'
+Attributes = 'Enabled'
+Process = '(?i)^(?!lsass|wininit|csrss|services|svchost|System).+'
+[artefact.synthetic]
+p = [1.0, 0.1, 0.0, 0.0]
+row = { PID = 7000, Process = "tool.exe", Privilege = "SeDebugPrivilege", Attributes = "Present,Enabled" }
+
+[[artefact]]
+id = "dump_tool_cmdline"
+category = "execution"
+weight = 2
+plugin = "windows.cmdline.CmdLine"
+[artefact.match]
+Args = '(?i)(comsvcs\.dll.*minidump|procdump.*lsass|sekurlsa)'
+[artefact.synthetic]
+p = [1.0, 0.1, 0.0, 0.0]
+row = { PID = 7000, Process = "rundll32.exe", Args = 'rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 664 out.dmp full' }

