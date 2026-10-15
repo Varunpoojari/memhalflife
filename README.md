@@ -77,10 +77,4 @@ Defensive research tool. It *reads* memory images and never generates or runs at
 Scenario notes point to Atomic Red Team tests and require an isolated lab with harmless test
 programs. Do not run attack simulations on systems you do not own.
 
-## Credit
-
-Inspired by the question posed in an NCI MSc thesis repository
-([tanishqbapna/lotl-memory-forensics](https://github.com/tanishqbapna/lotl-memory-forensics)).
-This is an independent re-implementation and extension; see [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md).
-
 MIT licensed.
