@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memhalflife"
+version = "0.1.0"
+description = "Quantify how long fileless / living-off-the-land attack evidence survives in memory, on-prem and in the cloud."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Varun Poojari" }]
+keywords = ["dfir", "memory-forensics", "volatility3", "living-off-the-land", "fileless", "mitre-attack", "cloud-forensics"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+yara = ["yara-python"]
+
+[project.scripts]
+memhalflife = "memhalflife.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+memhalflife = ["data/*.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

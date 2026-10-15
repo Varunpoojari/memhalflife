@@ -1,0 +1,30 @@
+# Acquisition-latency profiles: minutes from "decision to image" to "image taken".
+# Modelled as lognormal from a median and a 95th percentile.
+#
+# ALL VALUES BELOW ARE ILLUSTRATIVE PLACEHOLDERS (assumed = true).
+# Measure your own: time your runbook end to end, 10+ times, then edit these.
+# See docs/CLOUD_ACQUISITION.md.
+
+[profile.onprem_hypervisor_snapshot]
+description = "Analyst with console access takes a hypervisor memory snapshot."
+median_min = 3
+p95_min = 10
+assumed = true
+
+[profile.onprem_endpoint_agent]
+description = "EDR/IR agent triggers a WinPmem-style acquisition on the endpoint."
+median_min = 8
+p95_min = 30
+assumed = true
+
+[profile.cloud_vm_run_command_avml]
+description = "Cloud VM: remote-run command (SSM / Run Command / OS Login) executes AVML, then upload to storage."
+median_min = 12
+p95_min = 45
+assumed = true
+
+[profile.cloud_vm_ticketed_response]
+description = "Cloud VM: detection -> ticket -> on-call -> approval -> acquisition."
+median_min = 40
+p95_min = 120
+assumed = true
