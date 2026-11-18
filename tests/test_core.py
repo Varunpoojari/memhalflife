@@ -18,7 +18,7 @@ from memhalflife.survival import (
 
 
 def spec(**kw):
-    base = dict(id="a", category="execution", weight=1, plugin="p", match={"Args": "foo"}, partial={})
+    base = {"id": "a", "category": "execution", "weight": 1, "plugin": "p", "match": {"Args": "foo"}, "partial": {}}
     base.update(kw)
     return ArtefactSpec(**base)
 

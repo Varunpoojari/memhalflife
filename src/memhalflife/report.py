@@ -117,8 +117,10 @@ def decay_svg(summaries: list[ScenarioSummary], cols: int = 3) -> str:
     rows = math.ceil(len(summaries) / cols)
     W, H = cols * (pw + pad) + pad, rows * (ph + pad) + pad
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" '
-        f'aria-label="DCS decay per scenario" font-family="system-ui,sans-serif" font-size="11">'
+        (
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" '
+            f'aria-label="DCS decay per scenario" font-family="system-ui,sans-serif" font-size="11">'
+        )
     ]
     for i, s in enumerate(summaries):
         ox = pad + (i % cols) * (pw + pad)
@@ -127,10 +129,12 @@ def decay_svg(summaries: list[ScenarioSummary], cols: int = 3) -> str:
         x0, x1, y0, y1 = ox + l, ox + pw - r, oy + t, oy + ph - b
         n = len(s.curve.ts)
 
-        def X(k: int) -> float:
+        # Bind the per-panel values as defaults: these helpers are only called within this
+        # iteration, but binding keeps them correct if they are ever stored for later use.
+        def X(k: int, x0: float = x0, x1: float = x1, n: int = n) -> float:
             return x0 + (x1 - x0) * (k / (n - 1 if n > 1 else 1))
 
-        def Y(v: float) -> float:
+        def Y(v: float, y0: float = y0, y1: float = y1) -> float:
             return y1 - (y1 - y0) * max(0.0, min(1.0, v))
 
         color = "#1f6feb" if s.scenario.platform == "windows" else "#d97706"
