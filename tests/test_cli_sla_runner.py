@@ -1,11 +1,10 @@
-import json
 import math
 
 import pytest
 
 from memhalflife import cli
-from memhalflife.report import build_summaries
 from memhalflife.dataset import collect_records
+from memhalflife.report import build_summaries
 from memhalflife.runner import analyse_image, build_command, custody_record, sha256_file
 from memhalflife.sla import LatencyProfile, load_profiles, simulate
 from memhalflife.survival import Curve

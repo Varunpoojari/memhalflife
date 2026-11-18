@@ -59,7 +59,7 @@ def sha256_file(path: str | Path, chunk: int = 8 * 1024 * 1024) -> str:
 
 
 def utc_now() -> str:
-    return _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    return _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
 
 
 def custody_record(image: str | Path, **extra) -> dict:
@@ -110,6 +110,7 @@ def run_plugin(
             capture_output=True,
             text=True,
             timeout=timeout,
+            check=False,
         )
     except (subprocess.TimeoutExpired, OSError) as exc:
         (out_dir / f"{plugin}.error.txt").write_text(str(exc))
