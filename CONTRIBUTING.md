@@ -34,7 +34,7 @@ Installing the `yara` extra matters: without it the YARA tests are skipped, so a
 
 1. Fork the repository and create a branch from `main` (for example `scenario/s07-dll-sideload` or `fix/bootstrap-ci`).
 2. Keep each pull request to one change.
-3. Run `pytest` and make sure it passes before opening the pull request.
+3. Run `ruff check .` and `pytest` and make sure both pass before opening the pull request (install ruff with `pip install ruff`).
 4. Update `docs/` when you change methodology, scoring or acquisition guidance.
 5. Describe what changed, why, and how you verified it.
 
